@@ -1,0 +1,22 @@
+views:
+  - type: quiet-kanban
+    name: 需求看板
+    filters:
+      and:
+        - file.ext == "md"
+        - file.inFolder("需求详情")
+    statusProperty: note.状态
+    dateProperty: note.开始开发时间
+    projectProperty: note.项目
+    statusOrder:
+      - 待开始
+      - 开发中
+      - 测试中
+      - 已完成
+    columnWidth: 310
+    hideEmpty: true
+    openMode: split
+    togglePreview: true
+    sort:
+      - property: file.mtime
+        direction: DESC

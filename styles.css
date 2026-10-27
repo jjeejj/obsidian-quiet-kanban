@@ -1,0 +1,145 @@
+/* Everything is scoped to this plugin's view. Native Bases are untouched. */
+.qk-host {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  padding: 0 !important;
+}
+.qk-board {
+  --qk-column-width: 310px;
+  --qk-card-tint: 17%;
+  display: flex;
+  align-items: stretch;
+  flex: 1 1 auto;
+  gap: 16px;
+  padding: 16px;
+  min-height: 220px;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
+  box-sizing: border-box;
+}
+.qk-board *, .qk-board *::before, .qk-board *::after { box-sizing: border-box; }
+.qk-column {
+  --qk-accent: var(--color-blue);
+  flex: 0 0 var(--qk-column-width);
+  width: var(--qk-column-width);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid color-mix(in srgb, var(--qk-accent) 14%, var(--background-primary));
+  background: color-mix(in srgb, var(--qk-accent) 6%, var(--background-primary));
+  border-radius: 14px;
+  overflow: hidden;
+}
+.qk-column-header { display: flex; flex-shrink: 0; align-items: center; gap: 8px; padding: 12px; cursor: grab; }
+.qk-column-header:active { cursor: grabbing; }
+.qk-status-pill { display: flex; align-items: center; gap: 7px; min-width: 0; padding: 5px 10px; border-radius: 999px; background: color-mix(in srgb, var(--qk-accent) 32%, var(--background-primary)); font-size: 13px; font-weight: 600; color: var(--text-normal); overflow-wrap: anywhere; }
+.qk-status-dot { width: 8px; height: 8px; flex: 0 0 8px; border-radius: 50%; background: var(--qk-accent); }
+.qk-count { padding: 3px 7px; min-width: 22px; text-align: center; border-radius: 6px; background: color-mix(in srgb, var(--qk-accent) 12%, transparent); font-size: 11px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.qk-add { display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-left: auto; padding: 4px; border: 0; box-shadow: none; background: transparent; color: var(--text-muted); cursor: pointer; }
+.qk-add svg { width: 16px; height: 16px; }
+.qk-add:hover { color: var(--text-normal); background: var(--background-modifier-hover); }
+.qk-column-body { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; overflow-x: hidden; flex: 1 1 auto; min-height: 0; padding: 2px 12px 12px; scrollbar-width: thin; }
+.qk-card {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--qk-accent) 22%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--qk-accent) var(--qk-card-tint), var(--background-primary));
+  color: var(--text-normal);
+  cursor: pointer;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.qk-card:hover { border-color: color-mix(in srgb, var(--qk-accent) 65%, transparent); box-shadow: 0 3px 10px #00000018; }
+.qk-card:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: 2px; }
+.qk-card-title { font-size: 14px; font-weight: 500; line-height: 1.55; overflow-wrap: anywhere; white-space: pre-wrap; }
+.qk-date { font-size: 12px; line-height: 1.5; color: var(--text-muted); }
+.qk-tags { display: flex; flex-wrap: wrap; gap: 5px; min-width: 0; }
+.qk-tag { display: inline-block; max-width: 100%; padding: 2px 7px; border-radius: 5px; background: color-mix(in srgb, var(--qk-accent) 14%, transparent); font-size: 11px; line-height: 18px; overflow-wrap: anywhere; }
+.qk-unset { font-size: 11px; color: var(--text-muted); }
+.qk-empty, .qk-column-empty { color: var(--text-muted); font-size: 13px; padding: 18px 8px; line-height: 1.6; }
+.qk-empty { max-width: 480px; margin: 24px auto; }
+.qk-drop-target { outline: 2px solid var(--qk-accent); outline-offset: -2px; }
+.qk-close-detail { color: var(--text-muted); }
+@media (prefers-reduced-motion: reduce) { .qk-card { transition: none; } }
+
+.qk-card-top { display: flex; align-items: flex-start; gap: 6px; min-width: 0; }
+.qk-card-top .qk-card-title { flex: 1 1 auto; min-width: 0; }
+.qk-card-actions { display: flex; flex: 0 0 auto; opacity: 0; pointer-events: none; }
+.qk-card:hover .qk-card-actions, .qk-card:focus-within .qk-card-actions { opacity: 1; pointer-events: auto; }
+.qk-card-action { display: flex; align-items: center; justify-content: center; padding: 4px; margin: 0; border: 0; box-shadow: none; background: transparent; color: var(--text-muted); cursor: pointer; }
+.qk-card-action svg { width: 15px; height: 15px; }
+.qk-card-action:hover { color: var(--text-normal); background: var(--background-modifier-hover); }
+.qk-card-action:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: 1px; }
+@media (hover: none) { .qk-card-actions { opacity: 1; pointer-events: auto; } }
+
+.qk-inline-editor { display: flex; flex-direction: column; gap: 10px; cursor: default; }
+.qk-inline-editor label { display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: var(--text-muted); }
+.qk-inline-editor input, .qk-inline-editor textarea { width: 100%; min-width: 0; font-size: 13px; }
+.qk-inline-editor textarea { resize: vertical; }
+.qk-inline-editor [readonly] { opacity: .65; }
+.qk-edit-buttons { display: flex; justify-content: flex-end; gap: 6px; }
+.qk-edit-error { color: var(--text-error); font-size: 12px; overflow-wrap: anywhere; }
+.qk-edit-error:empty { display: none; }
+
+/* Compact confirmation; styling is limited to this plugin's delete modal. */
+.modal.qk-confirm-delete { width: 380px; max-width: calc(100vw - 32px); padding: 28px 24px 20px; }
+.qk-confirm-delete .modal-title { display: none; }
+.qk-confirm-delete .modal-content { margin: 0; }
+.qk-confirm-delete .qk-delete-question { margin: 0 16px 20px 0; font-size: var(--font-ui-medium); line-height: 1.6; overflow-wrap: anywhere; }
+.modal.qk-confirm-delete .modal-content .setting-item { padding: 0; border: 0; }
+.qk-confirm-delete .setting-item-info { display: none; }
+.qk-confirm-delete .setting-item-control { justify-content: flex-end; gap: 8px; }
+.qk-confirm-delete .setting-item-control button { min-height: 32px; padding: 6px 14px; }
+
+.qk-field { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; font-size: 12px; line-height: 1.5; min-width: 0; }
+.qk-field-label { color: var(--text-muted); flex-shrink: 0; }
+.qk-field-value { overflow-wrap: anywhere; min-width: 0; }
+.qk-field-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.qk-field-checkbox { font-size: 16px; }
+.qk-column-header .qk-configure { margin-left: auto; }
+.qk-column-header .qk-configure + .qk-add { margin-left: 0; }
+.modal.qk-field-config { width: 760px; max-width: calc(100vw - 32px); }
+.qk-field-config-row { border: 1px solid var(--background-modifier-border); border-radius: 8px; padding: 8px 12px; margin: 12px 0; }
+.qk-field-config-row .setting-item { border: 0; padding: 6px 0; }
+.qk-field-config-row input[type=text] { width: 150px; max-width: 100%; }
+.qk-inline-editor input[type=checkbox] { width: auto; align-self: flex-start; }
+
+.qk-field-config-footer { position: sticky; bottom: 0; padding: 12px 0 0; margin-top: 8px; background: var(--background-primary); border-top: 1px solid var(--background-modifier-border); z-index: 1; }
+.qk-field-config-footer .setting-item { padding: 0; border: 0; }
+
+.qk-color-settings { margin: 0 0 18px; border: 1px solid var(--background-modifier-border); border-radius: 10px; overflow: hidden; }
+.qk-color-list { padding: 0 14px; }
+.qk-color-list:empty { display: none; }
+.qk-color-settings .qk-color-row { padding: 9px 0; }
+.qk-color-row .setting-item-name { display: flex; align-items: center; gap: 9px; overflow-wrap: anywhere; }
+.qk-color-row .setting-item-name::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--qk-group-color); flex: 0 0 10px; }
+.qk-color-row .setting-item-control { gap: 8px; }
+.qk-color-settings .qk-color-add { padding: 12px 14px; margin: 0; background: var(--background-secondary); border-top: 1px solid var(--background-modifier-border); flex-wrap: wrap; gap: 8px; }
+.qk-color-add .setting-item-control { flex-wrap: wrap; gap: 8px; }
+.qk-color-add input { width: 140px; }
+
+/* Keep translated labels readable as the settings pane gets narrower. */
+.qk-settings .setting-item { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+.qk-settings .setting-item-info { flex: 1 1 220px; min-width: 0; margin-right: 0; }
+.qk-settings .setting-item-name { line-height: 1.5; }
+.qk-settings .setting-item-description { line-height: 1.5; }
+.qk-settings .setting-item-control { flex: 0 1 auto; min-width: 0; max-width: 100%; flex-wrap: wrap; gap: 8px; }
+.qk-settings .setting-item-control select { max-width: 100%; }
+.qk-settings .setting-item-control button { height: auto; min-height: 32px; white-space: normal; line-height: 1.4; }
+.qk-settings-intro { color: var(--text-muted); font-size: var(--font-ui-small); line-height: 1.6; margin: 18px 0; }
+.qk-settings .qk-template-setting { align-items: flex-start; }
+.qk-settings .qk-template-setting .setting-item-info { flex-basis: 100%; }
+.qk-settings .qk-template-setting .setting-item-control { flex: 1 1 100%; justify-content: flex-start; }
+.qk-settings .qk-template-setting input { flex: 1 1 200px; width: auto; min-width: 0; max-width: 100%; }
+.qk-settings .qk-color-row { margin: 0; border-radius: 0; background: transparent; }
+.qk-settings .qk-color-row .setting-item-info { flex-basis: 140px; }
+.qk-settings .qk-color-add .setting-item-info { flex-basis: 100%; }
+.qk-settings .qk-color-add .setting-item-control { flex: 1 1 100%; justify-content: flex-start; }
+.qk-settings .qk-color-add input { flex: 1 1 140px; min-width: 0; max-width: 100%; }

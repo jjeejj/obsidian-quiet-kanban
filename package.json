@@ -1,0 +1,14 @@
+{
+  "name": "quiet-kanban",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Compact, colored Obsidian Bases boards with reusable, collapsible previews.",
+  "scripts": {
+    "build": "node scripts/build.cjs",
+    "dev:install": "node scripts/dev-install.cjs",
+    "test": "node --test tests/*.test.cjs",
+    "check": "node --check scripts/build.cjs && npm run build && npm test"
+  },
+  "license": "MIT",
+  "engines": { "node": ">=20" }
+}
