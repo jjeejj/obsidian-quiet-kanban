@@ -7,6 +7,8 @@ class TemplatePicker extends FuzzySuggestModal {
     this.onSelect = onSelect;
     this.setPlaceholder(translate('选择模板笔记'));
   }
+  // Only enumerate paths when the user opens this picker. Reading template
+  // contents happens separately, when creating a note from a linked template.
   getItems() { return this.app.vault.getMarkdownFiles(); }
   getItemText(file) { return file.path; }
   async onChooseItem(file) {

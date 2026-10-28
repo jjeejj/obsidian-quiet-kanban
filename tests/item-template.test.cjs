@@ -105,3 +105,24 @@ test('generic creation writes boolean/number groups as typed scalars and allows 
   await assert.rejects(createItem(readOnly.view, 'A'), /只读分组/);
   assert.equal(readOnly.created(), 0);
 });
+
+test('template picker enumerates only on request and never reads note contents', async () => {
+  let enumerations = 0;
+  const files = [{ path: 'Templates/Task.md', extension: 'md' }, { path: 'Other.md', extension: 'md' }];
+  class FuzzySuggestModal {
+    constructor(app) { this.app = app; }
+    setPlaceholder() {}
+  }
+  const { TemplatePicker } = loadModule('src/files/item-template.cjs', { FuzzySuggestModal });
+  const app = { vault: { getMarkdownFiles() { enumerations++; return files; },
+    read() { throw Error('Picker must not read file contents'); },
+    cachedRead() { throw Error('Picker must not read file contents'); } } };
+  let selected;
+  const picker = new TemplatePicker(app, text => text, file => { selected = file; });
+  assert.equal(enumerations, 0);
+  assert.deepEqual(picker.getItems(), files);
+  assert.equal(enumerations, 1);
+  assert.equal(picker.getItemText(files[0]), 'Templates/Task.md');
+  await picker.onChooseItem(files[0]);
+  assert.equal(selected, files[0]);
+});

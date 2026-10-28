@@ -36,15 +36,20 @@ Release versions use `x.y.z`. For example, the Git tag for version `0.1.0` must 
 
 ## Publish a GitHub Release
 
-Publish the reviewed source and metadata on the repository's default branch. The directory reads the manifest from that branch.
+The repository includes `.github/workflows/release.yml`. Commit the version metadata and the rebuilt `main.js` together, then push a tag matching the manifest version (without a `v` prefix). The workflow validates the version metadata, runs all build checks and tests, checks the committed bundle matches the source, generates GitHub build provenance attestations for all three installation assets, and publishes the release. Actions are pinned to commit SHAs.
 
-In GitHub, open **Releases → Draft a new release**, select the intended source revision, and create a tag matching `manifest.json` exactly. Attach these three files from the verified build individually:
+The workflow does not overwrite existing releases. For a failed run, inspect whether a release was already created before retrying. Manual dispatch must target the release tag; dispatching a branch skips publishing. Creating a release manually does not run this workflow or produce attestations.
 
-- `main.js`
-- `manifest.json`
-- `styles.css`
+After the run completes, verify each downloaded asset (requires an authenticated GitHub CLI):
 
-Write release notes and publish a regular release. A draft or a source-code archive alone does not provide an installable release. Obsidian downloads the individual assets from the release matching the manifest version.
+```sh
+gh release download 0.1.1 --repo jjeejj/obsidian-quiet-kanban --dir /tmp/quiet-kanban-0.1.1
+for asset in main.js manifest.json styles.css; do
+  gh attestation verify "/tmp/quiet-kanban-0.1.1/$asset" --repo jjeejj/obsidian-quiet-kanban
+done
+```
+
+See [GitHub artifact attestations](https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/use-artifact-attestations). The existing manually published `0.1.0` assets do not have build provenance; publish `0.1.1` through Actions to address that review recommendation.
 
 ## Submit the First Release
 

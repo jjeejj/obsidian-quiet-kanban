@@ -64,3 +64,11 @@ npm run check
 最新流程以官方[插件提交指南](https://docs.obsidian.md/Plugins/Releasing/Submit%20your%20plugin)为准。
 
 [返回文档目录](README_zh.md)
+
+## 自动构建与来源证明
+
+仓库新增 `.github/workflows/release.yml`。将版本元数据与重新构建的 `main.js` 一起提交后，推送与 manifest 版本完全一致的标签（不带 `v`）。工作流会检查版本一致性、构建并运行测试、确认已提交产物与源码一致，为三个安装文件生成 GitHub 构建来源证明，再发布 Release。Actions 使用固定提交 SHA。
+
+手动从 GitHub 页面创建 Release 不会触发此流程，也不会生成来源证明。工作流不会覆盖已有 Release；失败重试前请检查发布状态。手动触发工作流时必须选择版本标签，选择分支会跳过发布。
+
+下载文件后，可以使用 `gh attestation verify 文件路径 --repo jjeejj/obsidian-quiet-kanban` 验证。现有 `0.1.0` 是手动发布，没有来源证明；需要通过此流程发布 `0.1.1`，才能处理这项审核建议。详细流程及验证命令见[英文发布文档](publishing.md)。

@@ -554,11 +554,14 @@ class PropertyPicker extends FuzzySuggestModal {
   getItemText(property) { return property; }
   onChooseItem(property) { this.choose(property); }
 }
-function availableProperties(app, view) {
+function availableProperties(app, view, layouts = []) {
   const properties = new Set(['file.name', 'file.ctime', 'file.mtime', 'file.folder', ...(view?.allProperties || [])]);
-  if (!view) for (const file of app.vault.getMarkdownFiles()) {
-    for (const key of Object.keys(app.metadataCache.getFileCache(file)?.frontmatter || {})) {
-      if (key !== 'position') properties.add(`note.${key}`);
+  // Global configuration has no query scope. Offer configured/preset fields
+  // instead of inspecting every note; arbitrary property names remain editable.
+  for (const input of layouts) {
+    const layout = layoutFrom(input);
+    for (const property of [layout.groupProperty, layout.titleProperty, ...layout.fields.map(field => field.property)]) {
+      if (property) properties.add(property);
     }
   }
   return [...properties].sort();
@@ -577,7 +580,8 @@ class FieldConfigModal extends Modal {
       .addDropdown(d => d.addOptions({ custom: t('自定义'), ...presetLabels(t) }).setValue(this.preset || 'custom').onChange(id => {
         if (id !== 'custom') { this.preset = id; this.draft = makePreset(id, t); this.draw(); }
       }));
-    const pick = callback => new PropertyPicker(this.app, availableProperties(this.app, this.board), callback, t).open();
+    const pick = callback => new PropertyPicker(this.app, availableProperties(this.app, this.board,
+      [this.plugin.settings, this.draft, ...Object.keys(presetLabels(t)).map(id => makePreset(id, t))]), callback, t).open();
     for (const [key, label] of [['groupProperty', '分组字段'], ['titleProperty', '标题字段']]) {
       new Setting(this.contentEl).setName(t(label)).setDesc(key === 'groupProperty' ? t('留空时所有文档显示在同一列；公式和文件属性只能查看。') : '')
         .addText(input => input.setValue(this.draft[key]).onChange(value => { if (key === 'groupProperty' && value.trim() !== this.draft[key]) this.draft.groupOrder = []; this.draft[key] = value.trim(); if (key === 'groupProperty') this.draft.groupOrderProperty = this.draft[key]; }))
@@ -784,6 +788,8 @@ class TemplatePicker extends FuzzySuggestModal {
     this.onSelect = onSelect;
     this.setPlaceholder(translate('选择模板笔记'));
   }
+  // Only enumerate paths when the user opens this picker. Reading template
+  // contents happens separately, when creating a note from a linked template.
   getItems() { return this.app.vault.getMarkdownFiles(); }
   getItemText(file) { return file.path; }
   async onChooseItem(file) {

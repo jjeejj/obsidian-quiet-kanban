@@ -1,7 +1,7 @@
 {
   "id": "quiet-kanban",
   "name": "Quiet Kanban",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "minAppVersion": "1.10.2",
   "description": "A compact Kanban view for Bases, with colored cards and collapsible previews.",
   "author": "jjeejj",

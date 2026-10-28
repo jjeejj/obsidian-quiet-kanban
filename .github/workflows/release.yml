@@ -1,0 +1,58 @@
+name: Release plugin
+
+on:
+  push:
+    tags: ['*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: Validate tag and version metadata
+        run: |
+          node <<'JS'
+          const assert = require('node:assert/strict');
+          const manifest = require('./manifest.json');
+          assert.match(manifest.version, /^\d+\.\d+\.\d+$/);
+          assert.equal(process.env.GITHUB_REF_NAME, manifest.version, 'Tag must match manifest version (no v prefix)');
+          assert.equal(require('./package.json').version, manifest.version);
+          assert.equal(require('./versions.json')[manifest.version], manifest.minAppVersion);
+          JS
+      - name: Build and test
+        run: npm run check
+      - name: Verify committed bundle matches source
+        run: git diff --exit-code -- main.js
+      - name: Attest installable assets
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-path: |
+            main.js
+            manifest.json
+            styles.css
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" main.js manifest.json styles.css \
+            --verify-tag --title "Quiet Kanban $GITHUB_REF_NAME" --generate-notes

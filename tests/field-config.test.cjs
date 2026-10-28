@@ -68,3 +68,19 @@ test('per-board save replaces its layout only, with independent order, aliases a
   assert.deepEqual(f.plugin.settings, original);
   assert.equal(f.saves(), 0);
 });
+
+test('property choices use board scope and configured layouts without scanning vault notes', () => {
+  const { availableProperties } = loadModule('src/board/field-config.cjs', { Modal: class {}, FuzzySuggestModal: class {} });
+  const app = new Proxy({}, { get() { throw Error('Property choices must not access vault or metadata cache'); } });
+  const layouts = [{ groupProperty: 'Bucket', titleProperty: 'note.Name', fields: [{ property: 'Cost' }] }];
+  const global = availableProperties(app, null, layouts);
+  assert.ok(global.includes('note.Bucket'));
+  assert.ok(global.includes('note.Name'));
+  assert.ok(global.includes('note.Cost'));
+  assert.ok(global.includes('file.name'));
+  const board = availableProperties(app, { allProperties: ['note.Team', 'formula.Total', 'note.Cost'] }, layouts);
+  assert.ok(board.includes('formula.Total'));
+  assert.ok(board.includes('note.Team'));
+  assert.equal(board.filter(p => p === 'note.Cost').length, 1);
+  assert.ok(!global.includes('note.Team'));
+});

@@ -105,3 +105,9 @@ See [Development and Testing](docs/development.md) for options and interface tes
 ## License
 
 [MIT](LICENSE).
+
+## Privacy and vault access
+
+Quiet Kanban works locally and makes no network requests or telemetry calls. Board data comes from the active Bases query. Global field suggestions use configured fields and scene presets, without scanning note metadata; you can type other property names directly. Board field suggestions also include properties supplied by Bases.
+
+Only when you open the template picker, the plugin lists Markdown file paths across the vault so you can choose any note as a template. It does not read note contents for this search. When creating a note from a linked template, it reads that selected template through the Obsidian API. Folder suggestions list vault folders. Card creation, editing, renaming, moving, and deletion use Obsidian APIs in response to your actions.

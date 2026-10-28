@@ -1,6 +1,6 @@
 {
   "name": "quiet-kanban",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Compact, colored Obsidian Bases boards with reusable, collapsible previews.",
   "scripts": {

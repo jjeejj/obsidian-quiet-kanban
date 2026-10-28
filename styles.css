@@ -4,8 +4,10 @@
   flex: 1 1 auto;
   min-height: 0;
   height: 100%;
-  padding: 0 !important;
+  padding: 0;
 }
+/* Override workspace padding without restricting layout in embedded previews. */
+.workspace-leaf-content .qk-host { padding: 0; }
 .qk-board {
   --qk-column-width: 310px;
   --qk-card-tint: 17%;

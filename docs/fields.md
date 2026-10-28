@@ -36,7 +36,7 @@ The default is `file.name`. You can choose another property; empty titles still 
 With **Custom field list** selected:
 
 1. Click **Add field**.
-2. Enter a property name, or use **Choose property** to search existing properties.
+2. Enter a property name, or use **Choose property** to search suggestions. Global settings offer configured fields and scene presets; a board also includes properties supplied by Bases. Other property names can be entered directly.
 3. Select a presentation and optionally set a display name and empty-value behavior.
 4. Use the arrow buttons to reorder fields, or **Remove** to remove a display entry.
 5. Save.
