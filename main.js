@@ -210,6 +210,9 @@ module.exports = Object.freeze({
   "请使用 YYYY-MM-DD 格式的有效日期": "Enter a valid date in YYYY-MM-DD format",
   "此字段由文件属性或公式计算，无法直接编辑": "This field is computed from a file property or formula and cannot be edited directly",
 
+  "模板路径": "Template path",
+  "输入仓库相对路径（包含 .md），或使用当前打开的笔记。": "Enter a vault-relative path including .md, or use the currently open note.",
+  "使用当前笔记": "Use current note",
   "选择模板笔记": "Choose a template note",
   "新建需求模板": "New item template",
   "关联已有 Markdown 模板的仓库路径；留空则不使用模板。也可点击列上的＋为当前看板关联模板。": "Vault path to an existing Markdown template. Leave blank for no template, or use a column’s + menu to associate one with this board.",
@@ -511,7 +514,7 @@ class BoardSettings extends PluginSettingTab {
         new TemplatePicker(this.app, text => this.plugin.t(text), async file => {
           await saveTemplate(file.path);
           this.display();
-        }).open();
+        }, this.plugin.settings.templateFile).open();
       }))
       .addButton(button => button.setButtonText(this.plugin.t('清除关联')).onClick(async () => {
         await saveTemplate('');
@@ -780,22 +783,54 @@ module.exports = { FolderSuggest };
 }, {}],
 "src/files/item-template.cjs": [function(module, exports, require) {
 'use strict';
-const { FuzzySuggestModal, Menu, Notice, getFrontMatterInfo, parseYaml } = require('obsidian');
+const { Modal, Setting, Menu, Notice, normalizePath, getFrontMatterInfo, parseYaml } = require('obsidian');
 
-class TemplatePicker extends FuzzySuggestModal {
-  constructor(app, translate, onSelect) {
+class TemplatePicker extends Modal {
+  constructor(app, translate, onSelect, initialPath = '') {
     super(app);
+    this.translate = translate;
     this.onSelect = onSelect;
-    this.setPlaceholder(translate('选择模板笔记'));
+    this.path = initialPath;
   }
-  // Only enumerate paths when the user opens this picker. Reading template
-  // contents happens separately, when creating a note from a linked template.
-  getItems() { return this.app.vault.getMarkdownFiles(); }
-  getItemText(file) { return file.path; }
-  async onChooseItem(file) {
-    try { await this.onSelect(file); }
-    catch (error) { new Notice(error.message || String(error)); }
+  onOpen() {
+    const t = this.translate;
+    this.contentEl.createEl('h2', { text: t('选择模板笔记') });
+    new Setting(this.contentEl).setName(t('模板路径'))
+      .setDesc(t('输入仓库相对路径（包含 .md），或使用当前打开的笔记。'))
+      .addText(input => {
+        this.input = input;
+        input.setPlaceholder('Templates/Task.md').setValue(this.path).onChange(value => { this.path = value; });
+      });
+    const active = this.app.workspace.getActiveFile();
+    if (active?.extension === 'md') {
+      new Setting(this.contentEl).setName(active.path)
+        .addButton(button => button.setButtonText(t('使用当前笔记')).onClick(() => {
+          this.path = active.path;
+          this.input.setValue(this.path);
+        }));
+    }
+    this.errorEl = this.contentEl.createEl('p', { attr: { role: 'alert' } });
+    new Setting(this.contentEl)
+      .addButton(button => button.setButtonText(t('取消')).onClick(() => this.close()))
+      .addButton(button => button.setButtonText(t('保存')).setCta().onClick(() => this.submit()));
   }
+  async submit() {
+    if (this.saving) return;
+    this.errorEl.textContent = '';
+    const path = this.path.trim();
+    // Resolve one explicit vault path. Never enumerate notes to locate a template.
+    const file = path && !path.startsWith('/') && !path.split(/[\\/]/).includes('..')
+      ? this.app.vault.getFileByPath(normalizePath(path)) : null;
+    if (!file || file.extension !== 'md') {
+      this.errorEl.textContent = this.translate('模板笔记不存在：{path}').replace('{path}', path);
+      return;
+    }
+    this.saving = true;
+    try { await this.onSelect(file); this.close(); }
+    catch (error) { this.errorEl.textContent = error.message || String(error); }
+    finally { this.saving = false; }
+  }
+  onClose() { this.contentEl.empty(); }
 }
 
 function parseTemplate(content) {
@@ -805,6 +840,18 @@ function parseTemplate(content) {
     throw Error('Template frontmatter must be a YAML object');
   }
   return { frontmatter: frontmatter || {}, body: content.slice(info.contentStart) };
+}
+
+function suppressNativeCreatePopover(view) {
+  const body = view.root?.ownerDocument?.body;
+  if (!body) return () => {};
+  const key = 'qkSuppressNewItemPopover';
+  body.dataset[key] = String((Number(body.dataset[key]) || 0) + 1);
+  return () => {
+    const remaining = (Number(body.dataset[key]) || 1) - 1;
+    if (remaining > 0) body.dataset[key] = String(remaining);
+    else delete body.dataset[key];
+  };
 }
 
 async function createItem(view, status) {
@@ -819,30 +866,54 @@ async function createItem(view, status) {
     template = parseTemplate(await view.app.vault.read(file));
   }
   let created;
-  await view.createFileForView('', (frontmatter, file) => {
-    // Bases-derived filter properties take priority over template defaults.
-    for (const [key, value] of Object.entries(template?.frontmatter || {})) {
-      if (!Object.hasOwn(frontmatter, key)) {
-        Object.defineProperty(frontmatter, key, { value, enumerable: true, writable: true, configurable: true });
+  let releasePopoverSuppression = suppressNativeCreatePopover(view);
+  try {
+    await view.createFileForView('', (frontmatter, file) => {
+      // Keep the template's property order while allowing Bases-derived filter
+      // values to override its defaults. Properties only supplied by Bases are
+      // appended after the template fields.
+      const derived = { ...frontmatter };
+      for (const key of Object.keys(frontmatter)) delete frontmatter[key];
+      for (const [key, value] of Object.entries(template?.frontmatter || {})) {
+        Object.defineProperty(frontmatter, key, {
+          value: Object.hasOwn(derived, key) ? derived[key] : value,
+          enumerable: true, writable: true, configurable: true
+        });
+      }
+      for (const [key, value] of Object.entries(derived)) {
+        if (!Object.hasOwn(frontmatter, key)) {
+          Object.defineProperty(frontmatter, key, { value, enumerable: true, writable: true, configurable: true });
+        }
+      }
+      if (property && status != null && status !== '') {
+        const key = property.slice(5);
+        // Preserve list/scalar storage; legacy statusProperty used list values.
+        frontmatter[key] = Array.isArray(frontmatter[key]) || options.groupProperty === undefined ? [status] : status;
+      } else if (property && template) delete frontmatter[property.slice(5)];
+      created = file;
+    });
+    if (created && template?.body) {
+      await view.app.vault.process(created, current => {
+        const info = getFrontMatterInfo(current);
+        // Keep native frontmatter and any content added while the creation UI opened.
+        const prefix = current.slice(0, info.contentStart);
+        const existingBody = current.slice(info.contentStart);
+        const separator = prefix && !prefix.endsWith('\n') ? '\n' : '';
+        return prefix + separator + template.body + (existingBody ? '\n' + existingBody : '');
+      });
+    }
+    if (created) {
+      const board = view.ownerLeaf?.();
+      if (board) {
+        // Bases opens its own editor popover during createFileForView. Close it
+        // while still visually suppressed, then hand the file to our detail pane.
+        view.queryController?.newItemMenu?.close?.();
+        releasePopoverSuppression();
+        releasePopoverSuppression = null;
+        await view.plugin.previews.open(board, created, options.openMode, false);
       }
     }
-    if (property && status != null && status !== '') {
-      const key = property.slice(5);
-      // Preserve list/scalar storage; legacy statusProperty used list values.
-      frontmatter[key] = Array.isArray(frontmatter[key]) || options.groupProperty === undefined ? [status] : status;
-    } else if (property && template) delete frontmatter[property.slice(5)];
-    created = file;
-  });
-  if (created && template?.body) {
-    await view.app.vault.process(created, current => {
-      const info = getFrontMatterInfo(current);
-      // Keep native frontmatter and any content added while the creation UI opened.
-      const prefix = current.slice(0, info.contentStart);
-      const existingBody = current.slice(info.contentStart);
-      const separator = prefix && !prefix.endsWith('\n') ? '\n' : '';
-      return prefix + separator + template.body + (existingBody ? '\n' + existingBody : '');
-    });
-  }
+  } finally { releasePopoverSuppression?.(); }
 }
 
 function showNewItemMenu(view, button, status, event) {
@@ -852,7 +923,7 @@ function showNewItemMenu(view, button, status, event) {
     .setIcon('plus').onClick(() => createItem(view, status).catch(error => view.fail(error))));
   menu.addSeparator();
   menu.addItem(item => item.setTitle(view.plugin.t('关联模板…')).setIcon('file-input')
-    .onClick(() => new TemplatePicker(view.app, text => view.plugin.t(text), file => view.config.set('templateFile', file.path)).open()));
+    .onClick(() => new TemplatePicker(view.app, text => view.plugin.t(text), file => view.config.set('templateFile', file.path), templateFile).open()));
   if (templateFile) {
     menu.addItem(item => item.setTitle(view.plugin.t('打开关联模板')).setIcon('file-text').onClick(async () => {
       const file = view.app.vault.getFileByPath(templateFile);

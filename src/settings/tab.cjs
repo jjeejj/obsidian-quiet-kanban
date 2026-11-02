@@ -35,7 +35,7 @@ class BoardSettings extends PluginSettingTab {
         new TemplatePicker(this.app, text => this.plugin.t(text), async file => {
           await saveTemplate(file.path);
           this.display();
-        }).open();
+        }, this.plugin.settings.templateFile).open();
       }))
       .addButton(button => button.setButtonText(this.plugin.t('清除关联')).onClick(async () => {
         await saveTemplate('');

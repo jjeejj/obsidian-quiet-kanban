@@ -28,14 +28,14 @@ Template property names should match the board's fields. They are not automatica
 ## Global Template
 
 1. Open **Settings → Quiet Kanban → Global new item template**.
-2. Click **Choose template** and search for an existing note, or enter its vault-relative path.
+2. Click **Choose template**, enter the vault-relative path including `.md`, and save. If a Markdown note is open, **Use current note** fills in its path. You can also type a path directly in the global setting.
 3. Boards without a local template setting use this template.
 
 **Clear association** removes only the global setting. It neither deletes the template file nor clears independent board templates.
 
 ## Per-Board Template
 
-Use any column's **+ → Link template…** to search for a note. The association belongs to the current board view and applies to all its columns.
+Use any column's **+ → Link template…**, enter the template's vault-relative path including `.md`, and save. The association belongs to the current board view and applies to all its columns.
 
 You can also configure **New item template** in Bases view options.
 
@@ -58,6 +58,7 @@ Property precedence is:
 3. Default properties from the template.
 
 An Ungrouped column does not inherit the template's value for the grouping property. Other template properties and its body are copied.
+New notes preserve the template's property order. Properties generated only by Bases and absent from the template are appended afterward.
 
 ## Open or Unlink
 

@@ -8,9 +8,10 @@ Cards represent real documents. Editing, moving, or deleting a card changes vaul
 
 1. Click **+** in the destination column.
 2. Choose **New document** or **Create document from linked template**.
-3. Name and edit the note in the native creation interface.
+3. After creation, the note opens directly in the board's detail pane so you can name and edit it immediately.
 
 The new document receives the destination column's grouping value. Without a grouping property, no extra grouping property is written. See [Templates](templates.md) for template behavior.
+The detail pane follows the board's current **Open details in** setting and is reused; the default is a right split.
 
 ## Quick Editing
 

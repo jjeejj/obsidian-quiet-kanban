@@ -89,6 +89,7 @@
 要求 Node.js 20+，无需第三方 npm 依赖。
 
 ```sh
+npm ci --ignore-scripts
 npm test
 npm run build
 npm run check
@@ -110,4 +111,4 @@ npm run dev:install -- --vault "/absolute/path/to/vault"
 
 Quiet Kanban 在本地运行，不发送网络请求或遥测数据。看板数据来自当前 Bases 查询。全局字段候选来自已配置字段和场景预设，不再遍历笔记元数据；其他属性名可以直接输入。单个看板还会提供 Bases 返回的属性。
 
-仅在打开模板选择器时，插件会列出仓库内 Markdown 文件路径，以便选择任意笔记作为模板；搜索过程不会读取笔记正文。使用关联模板创建笔记时，才通过 Obsidian API 读取该模板。文件夹建议会列出仓库内的文件夹。卡片新建、编辑、重命名、移动及删除均由你的操作触发，并使用 Obsidian API。
+模板选择仅解析你输入的仓库相对路径，或使用你明确选择的当前 Markdown 笔记，不会枚举全库笔记路径或为寻找模板而读取正文。使用关联模板创建笔记时，才通过 Obsidian API 读取该模板。文件夹建议会列出仓库内的文件夹。卡片新建、编辑、重命名、移动及删除均由你的操作触发，并使用 Obsidian API。

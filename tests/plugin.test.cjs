@@ -96,7 +96,8 @@ for (const filename of ['src/main.cjs', 'main.js']) {
     assert.equal(plugin.settings.language, 'auto');
     const globalRow = rows.find(row => row.name === 'Global new item template');
     globalRow.buttons[0].click();
-    await pickers.at(-1).onChooseItem({ path: 'Templates/Task.md' });
+    assert.equal(openedModals.at(-1).path, '');
+    await openedModals.at(-1).onSelect({ path: 'Templates/Task.md' });
     assert.equal(saved.settings.templateFile, 'Templates/Task.md');
     const { BoardView } = loadModule('src/board/view.cjs', obsidian);
     const options = override => BoardView.prototype.options.call({ plugin, config: { get: key => key === 'templateFile' ? override : undefined } });

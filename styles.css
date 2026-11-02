@@ -8,6 +8,10 @@
 }
 /* Override workspace padding without restricting layout in embedded previews. */
 .workspace-leaf-content .qk-host { padding: 0; }
+
+/* Bases creates its editor popover before createFileForView resolves. Keep it
+   invisible while Quiet Kanban hands the new note to the managed detail pane. */
+body[data-qk-suppress-new-item-popover] .hover-popover { visibility: hidden; }
 .qk-board {
   --qk-column-width: 310px;
   --qk-card-tint: 17%;
@@ -99,6 +103,25 @@
 .qk-confirm-delete .setting-item-info { display: none; }
 .qk-confirm-delete .setting-item-control { justify-content: flex-end; gap: 8px; }
 .qk-confirm-delete .setting-item-control button { min-height: 32px; padding: 6px 14px; }
+.qk-confirm-delete .setting-item-control button.mod-destructive:not(:disabled) {
+  background: var(--color-red);
+  color: var(--text-on-accent);
+  opacity: 1;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 2px #00000024;
+}
+.qk-confirm-delete .setting-item-control button.mod-destructive:not(:disabled):hover {
+  background: color-mix(in srgb, var(--color-red) 84%, black);
+}
+.qk-confirm-delete .setting-item-control button.mod-destructive:focus-visible {
+  outline: 2px solid var(--color-red);
+  outline-offset: 2px;
+}
+.qk-confirm-delete .setting-item-control button.mod-destructive:disabled {
+  opacity: .5;
+  cursor: wait;
+}
 
 .qk-field { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; font-size: 12px; line-height: 1.5; min-width: 0; }
 .qk-field-label { color: var(--text-muted); flex-shrink: 0; }

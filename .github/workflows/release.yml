@@ -37,8 +37,13 @@ jobs:
           assert.match(manifest.version, /^\d+\.\d+\.\d+$/);
           assert.equal(process.env.GITHUB_REF_NAME, manifest.version, 'Tag must match manifest version (no v prefix)');
           assert.equal(require('./package.json').version, manifest.version);
+          const lock = require('./package-lock.json');
+          assert.equal(lock.version, manifest.version);
+          assert.equal(lock.packages[''].version, manifest.version);
           assert.equal(require('./versions.json')[manifest.version], manifest.minAppVersion);
           JS
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Build and test
         run: npm run check
       - name: Verify committed bundle matches source

@@ -19,6 +19,7 @@
 使用 Node.js 20+，在项目目录执行：
 
 ```sh
+npm ci --ignore-scripts
 npm run check
 ```
 
@@ -67,7 +68,7 @@ npm run check
 
 ## 自动构建与来源证明
 
-仓库新增 `.github/workflows/release.yml`。将版本元数据与重新构建的 `main.js` 一起提交后，推送与 manifest 版本完全一致的标签（不带 `v`）。工作流会检查版本一致性、构建并运行测试、确认已提交产物与源码一致，为三个安装文件生成 GitHub 构建来源证明，再发布 Release。Actions 使用固定提交 SHA。
+仓库新增 `.github/workflows/release.yml`。将版本元数据与重新构建的 `main.js` 一起提交后，推送与 manifest 版本完全一致的标签（不带 `v`）。工作流会检查版本一致性、通过 `npm ci --ignore-scripts` 按锁文件安装、构建并运行测试、确认已提交产物与源码一致，为三个安装文件生成 GitHub 构建来源证明，再发布 Release。Actions 使用固定提交 SHA。
 
 手动从 GitHub 页面创建 Release 不会触发此流程，也不会生成来源证明。工作流不会覆盖已有 Release；失败重试前请检查发布状态。手动触发工作流时必须选择版本标签，选择分支会跳过发布。
 

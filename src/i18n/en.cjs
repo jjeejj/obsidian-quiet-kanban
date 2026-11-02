@@ -95,6 +95,9 @@ module.exports = Object.freeze({
   "请使用 YYYY-MM-DD 格式的有效日期": "Enter a valid date in YYYY-MM-DD format",
   "此字段由文件属性或公式计算，无法直接编辑": "This field is computed from a file property or formula and cannot be edited directly",
 
+  "模板路径": "Template path",
+  "输入仓库相对路径（包含 .md），或使用当前打开的笔记。": "Enter a vault-relative path including .md, or use the currently open note.",
+  "使用当前笔记": "Use current note",
   "选择模板笔记": "Choose a template note",
   "新建需求模板": "New item template",
   "关联已有 Markdown 模板的仓库路径；留空则不使用模板。也可点击列上的＋为当前看板关联模板。": "Vault path to an existing Markdown template. Leave blank for no template, or use a column’s + menu to associate one with this board.",

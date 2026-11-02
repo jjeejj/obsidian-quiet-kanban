@@ -19,6 +19,7 @@ Keep `isDesktopOnly: true` for this desktop release. Set `minAppVersion` to the 
 Run from the project directory with Node.js 20+:
 
 ```sh
+npm ci --ignore-scripts
 npm run check
 ```
 
@@ -36,7 +37,7 @@ Release versions use `x.y.z`. For example, the Git tag for version `0.1.0` must 
 
 ## Publish a GitHub Release
 
-The repository includes `.github/workflows/release.yml`. Commit the version metadata and the rebuilt `main.js` together, then push a tag matching the manifest version (without a `v` prefix). The workflow validates the version metadata, runs all build checks and tests, checks the committed bundle matches the source, generates GitHub build provenance attestations for all three installation assets, and publishes the release. Actions are pinned to commit SHAs.
+The repository includes `.github/workflows/release.yml`. Commit the version metadata and the rebuilt `main.js` together, then push a tag matching the manifest version (without a `v` prefix). The workflow validates the version metadata, installs from `package-lock.json` using `npm ci --ignore-scripts`, runs all build checks and tests, checks the committed bundle matches the source, generates GitHub build provenance attestations for all three installation assets, and publishes the release. Actions are pinned to commit SHAs.
 
 The workflow does not overwrite existing releases. For a failed run, inspect whether a release was already created before retrying. Manual dispatch must target the release tag; dispatching a branch skips publishing. Creating a release manually does not run this workflow or produce attestations.
 
