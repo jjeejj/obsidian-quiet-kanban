@@ -36,9 +36,9 @@ Focus returns to the corresponding board. Use the command while that board or it
 
 ## Manual Navigation Protection
 
-If you navigate to another document inside a managed detail pane, the plugin stops managing that pane. Later card clicks do not overwrite or close a pane that you have repurposed.
+If you navigate to another document inside a managed detail pane, later card clicks leave that pane intact and open a new detail pane instead.
 
-Opening a document from the board again creates a new managed detail record.
+Until then, the collapse button and command still close that detail pane when you explicitly request it, even if its document was renamed or you navigated to another document.
 
 ## Restart and Reload
 

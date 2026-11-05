@@ -16,11 +16,11 @@ class PreviewManager {
     current.finally(() => { if (this.queues.get(boardId) === current) this.queues.delete(boardId); }).catch(() => {});
     return current;
   }
-  resolve(boardId) {
+  resolve(boardId, { matchPath = true } = {}) {
     const record = this.records.get(boardId);
     if (!record) return null;
     const leaf = this.workspace.getLeafById(record.leafId);
-    if (!leaf || leaf.id === boardId || leaf.view?.getState().file !== record.path) {
+    if (!leaf || leaf.id === boardId || (matchPath && leaf.view?.getState().file !== record.path)) {
       record.button?.remove();
       this.records.delete(boardId);
       this.hooks.changed?.();
@@ -49,17 +49,25 @@ class PreviewManager {
       existing?.record.button?.remove();
       const record = { leafId: leaf.id, path: file.path, mode };
       this.records.set(board.id, record);
-      record.button = this.hooks.button?.(leaf, () => this.close(board.id));
+      record.button = this.hooks.button?.(leaf, () => this.close(board.id, leaf.id));
       this.hooks.changed?.();
     });
   }
-  close(boardId) { return this.enqueue(boardId, () => this.closeNow(boardId)); }
-  closeNow(boardId) {
-    const found = this.resolve(boardId);
+  close(boardId, leafId) {
+    return this.enqueue(boardId, () => {
+      if (leafId && this.records.get(boardId)?.leafId !== leafId) return;
+      // An explicit collapse targets the managed pane, even after a rename or
+      // navigation. Automatic reuse/toggle still requires the original path.
+      return this.closeNow(boardId, { matchPath: false });
+    });
+  }
+  closeNow(boardId, options) {
+    const found = this.resolve(boardId, options);
     if (!found) return;
+    // Keep the control and record available if Obsidian fails to detach it.
+    found.leaf.detach();
     found.record.button?.remove();
     this.records.delete(boardId);
-    found.leaf.detach();
     const board = this.workspace.getLeafById(boardId);
     if (board) this.workspace.setActiveLeaf(board, { focus: true });
     this.hooks.changed?.();
@@ -75,7 +83,7 @@ class PreviewManager {
       if (!board || !leaf || leaf.view?.getState().file !== saved.path) continue;
       const record = { leafId: saved.leafId, path: saved.path, mode: saved.mode === 'tab' ? 'tab' : 'split' };
       this.records.set(saved.boardId, record);
-      record.button = this.hooks.button?.(leaf, () => this.close(saved.boardId));
+      record.button = this.hooks.button?.(leaf, () => this.close(saved.boardId, leaf.id));
     }
   }
   dispose() {
