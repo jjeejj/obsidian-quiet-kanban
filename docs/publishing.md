@@ -25,19 +25,28 @@ npm run check
 
 Complete the interface checks in [Development and Testing](development.md). Check creation, grouping, drag operations, templates, quick edit, previews, and both interface languages in a test vault.
 
-Before each release, update these files together:
+The release workflow uses the pushed tag as the version. It automatically updates these files in the build checkout:
 
 | File | Value |
 | --- | --- |
-| `manifest.json` | Plugin version and minimum supported Obsidian version |
+| `manifest.json` | Plugin version from the tag |
 | `package.json` | The same plugin version |
-| `versions.json` | An entry mapping the new plugin version to its minimum supported Obsidian version |
+| `package-lock.json` | The top-level and root-package versions |
+| `versions.json` | A new entry mapping the tag version to `manifest.minAppVersion` |
 
-Release versions use `x.y.z`. For example, the Git tag for version `0.1.0` must be **`0.1.0`**, without a `v` prefix.
+You do not need to edit these version numbers before tagging. Continue to set `minAppVersion` yourself when the plugin's minimum supported Obsidian version changes. Release tags use `x.y.z`, without a `v` prefix or prerelease suffix.
 
 ## Publish a GitHub Release
 
-The repository includes `.github/workflows/release.yml`. Commit the version metadata and the rebuilt `main.js` together, then push a tag matching the manifest version (without a `v` prefix). The workflow validates the version metadata, installs from `package-lock.json` using `npm ci --ignore-scripts`, runs all build checks and tests, checks the committed bundle matches the source, generates GitHub build provenance attestations for all three installation assets, and publishes the release. Actions are pinned to commit SHAs.
+The repository includes `.github/workflows/release.yml`. Commit and push your source changes and rebuilt `main.js`, then create and push the next version tag, for example `0.1.4`. The tagged commit must contain this workflow and `scripts/release-version.cjs`; old tags keep their old workflow.
+
+The `release` job sets all four version files from the tag before installing dependencies, runs the build and tests, checks the committed bundle matches the source, attests the three installable assets, and publishes the release. Actions are pinned to commit SHAs.
+
+After publishing succeeds, a separate `sync-version` job checks out the current default branch and commits only the four version files as `github-actions[bot]`. This keeps the committed manifest aligned with the published assets. Obsidian's directory reads the manifest at the HEAD of the default branch and installs the release matching its version; see the [official submission guide](https://docs.obsidian.md/plugins/releasing/submit-plugin).
+
+The sync job retries concurrent default-branch pushes up to three times, reading the branch again on each attempt. An older tag does not downgrade its version. The job preserves other metadata and stops if the minimum supported app version has changed since the tagged release.
+
+The default branch must allow the workflow token to push these metadata commits. The job uses a normal push, never a force push. If branch protection or a concurrent push blocks it, the release already exists: resolve the branch issue and choose **Re-run failed jobs** to retry only `sync-version`. Your local checkout is not automatically updated; pull the bot commit before subsequent work.
 
 The workflow does not overwrite existing releases. For a failed run, inspect whether a release was already created before retrying. Manual dispatch must target the release tag; dispatching a branch skips publishing. Creating a release manually does not run this workflow or produce attestations.
 
@@ -65,7 +74,7 @@ Once available, users open **Settings → Community plugins → Browse**, search
 
 ## Publish Updates
 
-Update the version metadata, run the checks, and publish another GitHub release with a matching tag and all three assets. Subsequent versions do not require another initial directory submission. Users can check for updates in Obsidian.
+Run the checks, commit and push the source and rebuilt bundle, then create and push a new `x.y.z` tag. Actions updates the version files, publishes the assets, and synchronizes the default branch. Subsequent versions do not require another initial directory submission. Users can check for updates in Obsidian.
 
 See the official [submission guide](https://docs.obsidian.md/Plugins/Releasing/Submit%20your%20plugin) for the current process.
 

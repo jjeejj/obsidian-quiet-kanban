@@ -29,19 +29,8 @@ jobs:
         with:
           node-version: '22'
           package-manager-cache: false
-      - name: Validate tag and version metadata
-        run: |
-          node <<'JS'
-          const assert = require('node:assert/strict');
-          const manifest = require('./manifest.json');
-          assert.match(manifest.version, /^\d+\.\d+\.\d+$/);
-          assert.equal(process.env.GITHUB_REF_NAME, manifest.version, 'Tag must match manifest version (no v prefix)');
-          assert.equal(require('./package.json').version, manifest.version);
-          const lock = require('./package-lock.json');
-          assert.equal(lock.version, manifest.version);
-          assert.equal(lock.packages[''].version, manifest.version);
-          assert.equal(require('./versions.json')[manifest.version], manifest.minAppVersion);
-          JS
+      - name: Set release version from tag
+        run: node scripts/release-version.cjs "$GITHUB_REF_NAME"
       - name: Install locked dependencies
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Build and test
@@ -61,3 +50,48 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" main.js manifest.json styles.css \
             --verify-tag --title "Quiet Kanban $GITHUB_REF_NAME" --generate-notes
+
+  sync-version:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: Check out current default branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: release-metadata
+          persist-credentials: true
+      - name: Update default-branch version metadata
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          node scripts/release-version.cjs "$GITHUB_REF_NAME"
+          cd release-metadata
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3; do
+            # Re-read the branch after concurrent releases or maintainer pushes.
+            git fetch --depth=1 origin "refs/heads/$DEFAULT_BRANCH"
+            git checkout --detach FETCH_HEAD
+            node ../scripts/release-version.cjs "$GITHUB_REF_NAME" --sync-default .
+            if git diff --quiet -- manifest.json package.json package-lock.json versions.json; then
+              exit 0
+            fi
+            git add -- manifest.json package.json package-lock.json versions.json
+            git commit -m "chore: sync release version $GITHUB_REF_NAME"
+            if git push origin "HEAD:refs/heads/$DEFAULT_BRANCH"; then
+              exit 0
+            fi
+            sleep "$attempt"
+          done
+          echo 'Could not synchronize version metadata. Resolve branch permissions or concurrent updates, then re-run failed jobs.' >&2
+          exit 1
